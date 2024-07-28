@@ -21,7 +21,7 @@ When you run the script, you'll see the following menu:
 2. Start Download Queue
 3. Exit
 ```
-### Download a Single YouTube Address
+### Download a Single YouTube Video
 1. Choose option 1.
 2. Enter the YouTube URL.
 3. View available formats and enter the format code you want to download (e.g., 251 or 251+271).
