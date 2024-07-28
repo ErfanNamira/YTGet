@@ -1,11 +1,11 @@
 # 📥 YTGet
 Welcome to YTGet! This is a simple and efficient script to manage and download YouTube videos using the yt-dlp executable. This tool offers features like internet connectivity checking, automatic updates for yt-dlp, downloading videos in specified formats, and managing a download queue.
 ## ✨ Features
-`*` Automatically download the latest version of yt-dlp.
-`*` Fetch and display available formats for YouTube videos.
-`*` Add download tasks to a queue.
-`*` Process and manage the download queue.
-`*` Save and load configurations for persistent settings.
+* Automatically download the latest version of yt-dlp.
+* Fetch and display available formats for YouTube videos.
+* Add download tasks to a queue.
+* Process and manage the download queue.
+* Save and load configurations for persistent settings.
 # 💻 Installation
 1. Download the latest release from the releases page.
 2. Extract the files to your desired location.
