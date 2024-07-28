@@ -1,6 +1,10 @@
 # 📥 YTGet
 Welcome to YTGet! This is a simple and efficient script to manage and download YouTube videos using the yt-dlp executable. This tool offers features like automatic updates for yt-dlp, downloading videos in specified formats, and managing a download queue.
-![YTGet](https://github.com/ErfanNamira/YTGet/blob/main/Images/YTGet.jpg?raw=true)
+
+<p align="center">
+  <img src="https://github.com/ErfanNamira/YTGet/blob/main/Images/YTGet.jpg?raw=true" alt="YTGet">
+</p>
+
 ## ✨ Features
 * Automatically download the latest version of yt-dlp.
 * Fetch and display available formats for YouTube videos.
