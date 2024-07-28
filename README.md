@@ -1,5 +1,5 @@
 # 📥 YTGet
-Welcome to YTGet! This is a simple and efficient script to manage and download YouTube videos using the yt-dlp executable. This tool offers features like internet connectivity checking, automatic updates for yt-dlp, downloading videos in specified formats, and managing a download queue.
+Welcome to YTGet! This is a simple and efficient script to manage and download YouTube videos using the yt-dlp executable. This tool offers features like automatic updates for yt-dlp, downloading videos in specified formats, and managing a download queue.
 ## ✨ Features
 * Automatically download the latest version of yt-dlp.
 * Fetch and display available formats for YouTube videos.
@@ -30,10 +30,8 @@ When you run the script, you'll see the following menu:
 ### Start Download Queue
 1. Choose option 2.
 The script will process all items in the queue and download them to the specified path.
-### Configuration
-The script uses a configuration file (YTGet_Conf.json) to store settings like the download path, queue, and failed downloads. The configuration is loaded at the start of the script and saved after every change.
 ## ⚙️ Configuration
-The configuration is stored in a JSON file (YTGet_Conf.json). Here is an example of what the file might look like:
+The script utilizes a configuration file to maintain settings such as the download path, queue, and failed downloads. This configuration is loaded at the beginning of the script and updated after each change. The settings are saved in a JSON file (YTGet_Conf.json). Here is an example of what the file might look like:
 ```
 {
     "download_path": "/path/to/downloads",
@@ -41,8 +39,8 @@ The configuration is stored in a JSON file (YTGet_Conf.json). Here is an example
     "failed_downloads": []
 }
 ```
-`*` download_path: The default path where downloads will be saved.
-`*` queue: A list of download tasks waiting to be processed.
-`*` failed_downloads: A list of downloads that failed.
+* download_path: The default path where downloads will be saved.
+* queue: A list of download tasks waiting to be processed.
+* failed_downloads: A list of downloads that failed.
 ## 📄 License
 This project is licensed under the MIT License. See the LICENSE file for details.
