@@ -17,7 +17,7 @@ python YTGet.py
 ### Main Menu
 When you run the script, you'll see the following menu:
 ```
-1. Download A Single YouTube Address
+1. Download a Single YouTube Video
 2. Start Download Queue
 3. Exit
 ```
