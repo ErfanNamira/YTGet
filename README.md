@@ -29,6 +29,7 @@ When you run the script, you'll see the following menu:
 5. Choose whether to add the download to the queue or start immediately.
 ### Start Download Queue
 1. Choose option 2.
+
 The script will process all items in the queue and download them to the specified path.
 ## ⚙️ Configuration
 The script utilizes a configuration file to maintain settings such as the download path, queue, and failed downloads. This configuration is loaded at the beginning of the script and updated after each change. The settings are saved in a JSON file (YTGet_Conf.json). Here is an example of what the file might look like:
