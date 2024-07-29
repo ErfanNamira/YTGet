@@ -32,8 +32,8 @@ def check_internet_connectivity():
         print_colored(f"Error checking internet connectivity: {e}", Colors.LIGHT_RED)
         return False
 
-# Function to get the latest version from GitHub
-def get_latest_version():
+# Function to get the latest version from GitHub for YTGet.py
+def get_latest_version_youtube():
     url = "https://api.github.com/repos/ErfanNamira/YTGet/releases/latest"
     try:
         with urllib.request.urlopen(url) as response:
@@ -44,7 +44,7 @@ def get_latest_version():
         return None
 
 # Function to download the latest YTGet.py
-def download_latest_version(latest_version):
+def download_latest_version_youtube(latest_version):
     download_url = f"https://github.com/ErfanNamira/YTGet/releases/download/{latest_version}/YTGet.py"
     try:
         with urllib.request.urlopen(download_url) as response, open("YTGet_new.py", "wb") as out_file:
@@ -53,7 +53,7 @@ def download_latest_version(latest_version):
         print_colored(f"Error downloading latest version: {e}", Colors.LIGHT_RED)
 
 # Function to get the local version of YTGet
-def get_local_version():
+def get_local_version_youtube():
     try:
         with open('YTGet.py', 'r') as file:
             for line in file:
@@ -66,16 +66,43 @@ def get_local_version():
     return None
 
 # Function to update YTGet.py and restart
-def update_and_restart():
-    latest_version = get_latest_version()
+def update_and_restart_youtube():
+    latest_version = get_latest_version_youtube()
     if latest_version:
         print_colored("Downloading the latest version of YTGet...", Colors.LIGHT_CYAN)
-        download_latest_version(latest_version)
+        download_latest_version_youtube(latest_version)
         print_colored("Update completed. Restart the program to access the newest version.", Colors.LIGHT_GREEN)
         os.rename('YTGet.py', 'YTGet_old.py')
         os.rename('YTGet_new.py', 'YTGet.py')
     else:
         print_colored("Update failed. Latest version could not be fetched.", Colors.LIGHT_RED)
+
+# Function to get the latest version from GitHub for yt-dlp
+def get_latest_version_yt_dlp():
+    url = "https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest"
+    try:
+        with urllib.request.urlopen(url) as response:
+            data = json.loads(response.read().decode())
+            return data['tag_name']
+    except Exception as e:
+        print_colored(f"Error fetching yt-dlp latest version: {e}", Colors.LIGHT_RED)
+        return None
+
+# Function to download the latest yt-dlp executable
+def download_latest_version_yt_dlp(latest_version):
+    download_url = f"https://github.com/yt-dlp/yt-dlp/releases/download/{latest_version}/yt-dlp.exe"
+    try:
+        with urllib.request.urlopen(download_url) as response, open("yt-dlp.exe", "wb") as out_file:
+            out_file.write(response.read())
+    except Exception as e:
+        print_colored(f"Error downloading yt-dlp: {e}", Colors.LIGHT_RED)
+
+# Function to get the local version of yt-dlp
+def get_local_version_yt_dlp():
+    if not os.path.exists('yt-dlp.exe'):
+        return None
+    result = subprocess.run(['yt-dlp.exe', '--version'], capture_output=True, text=True)
+    return result.stdout.strip()
 
 # Function to fetch available formats for a given URL
 def get_available_formats(url):
@@ -195,25 +222,47 @@ def main():
 
     # Check for updates
     print_colored("Checking for updates...", Colors.LIGHT_CYAN)
-    latest_version = get_latest_version()
-    local_version = get_local_version()
+    latest_version_youtube = get_latest_version_youtube()
+    local_version_youtube = get_local_version_youtube()
 
-    if local_version is None:
-        if latest_version:
+    if local_version_youtube is None:
+        if latest_version_youtube:
             print_colored(f"YTGet.py not found. Downloading the latest version...", Colors.LIGHT_RED)
-            download_latest_version(latest_version)
-            print_colored(f"YTGet.py has been downloaded and updated to version {latest_version}.", Colors.LIGHT_GREEN)
+            download_latest_version_youtube(latest_version_youtube)
+            print_colored(f"YTGet.py has been downloaded and updated to version {latest_version_youtube}.", Colors.LIGHT_GREEN)
         else:
             print_colored("Cannot fetch latest version. Update aborted.", Colors.LIGHT_RED)
-    elif latest_version != local_version:
-        print_colored(f"A new version of YTGet is available: {latest_version} (current version: {local_version})", Colors.LIGHT_RED)
+    elif latest_version_youtube != local_version_youtube:
+        print_colored(f"A new version of YTGet is available: {latest_version_youtube} (current version: {local_version_youtube})", Colors.LIGHT_RED)
         update = input("Do you want to update YTGet? (y/n): ")
         if update.lower() == 'y':
-            update_and_restart()
+            update_and_restart_youtube()
         else:
             print_colored("Skipping update.", Colors.LIGHT_RED)
     else:
-        print_colored(f"You already have the latest version: {latest_version}", Colors.LIGHT_GREEN)
+        print_colored(f"You already have the latest version: {latest_version_youtube}", Colors.LIGHT_GREEN)
+
+    # Update yt-dlp if necessary
+    latest_version_yt_dlp = get_latest_version_yt_dlp()
+    local_version_yt_dlp = get_local_version_yt_dlp()
+
+    if local_version_yt_dlp is None:
+        if latest_version_yt_dlp:
+            print_colored(f"yt-dlp not found. Downloading the latest version...", Colors.LIGHT_RED)
+            download_latest_version_yt_dlp(latest_version_yt_dlp)
+            print_colored(f"yt-dlp has been downloaded and updated to version {latest_version_yt_dlp}.", Colors.LIGHT_GREEN)
+        else:
+            print_colored("Cannot fetch yt-dlp latest version. Update aborted.", Colors.LIGHT_RED)
+    elif latest_version_yt_dlp != local_version_yt_dlp:
+        print_colored(f"A new version of yt-dlp is available: {latest_version_yt_dlp} (current version: {local_version_yt_dlp})", Colors.LIGHT_RED)
+        update = input("Do you want to update yt-dlp? (y/n): ")
+        if update.lower() == 'y':
+            download_latest_version_yt_dlp(latest_version_yt_dlp)
+            print_colored("yt-dlp has been updated.", Colors.LIGHT_GREEN)
+        else:
+            print_colored("Skipping update.", Colors.LIGHT_RED)
+    else:
+        print_colored(f"You already have the latest version of yt-dlp: {latest_version_yt_dlp}", Colors.LIGHT_GREEN)
 
     config = load_config()
 
