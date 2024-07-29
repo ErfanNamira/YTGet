@@ -1,5 +1,5 @@
 # YTGet.py
-__version__ = '1.0.4'
+__version__ = '1.0.5'
 
 import subprocess
 import os
@@ -127,7 +127,7 @@ def get_available_formats(url):
         return ""
 
 # Function to download video with the specified format
-def download_video(url, format_code, download_path, max_retries=3):
+def download_video(url, format_code, download_path, max_retries=10):
     os.makedirs(download_path, exist_ok=True)
     retries = 0
     while retries < max_retries:
@@ -159,8 +159,8 @@ def save_config(config):
         print_colored(f"Error saving configuration: {e}", Colors.LIGHT_RED)
 
 # Function to add a new download to the queue
-def add_download_to_queue(url, format_code, config):
-    config["queue"].append({"url": url, "format_code": format_code})
+def add_download_to_queue(url, format_code, download_path, config):
+    config["queue"].append({"url": url, "format_code": format_code, "download_path": download_path})
     save_config(config)
 
 # Function to process the download queue
@@ -169,7 +169,7 @@ def process_queue(config):
     for item in queue_copy:
         url = item["url"]
         format_code = item["format_code"]
-        download_path = config["download_path"] or os.getcwd()
+        download_path = item["download_path"] or config["download_path"] or os.getcwd()
         print(f"{Colors.LIGHT_GREEN}Starting download for {url}...{Colors.RESET}")
         if download_video(url, format_code, download_path):
             print(f"{Colors.LIGHT_GREEN}Download completed for {url}.{Colors.RESET}")
@@ -306,7 +306,7 @@ def main():
 
                 queue_or_immediate = input(f"{Colors.LIGHT_CYAN}Do you want to add this download to the queue or start immediately? (q/i): {Colors.RESET}")
                 if queue_or_immediate.lower() == 'q':
-                    add_download_to_queue(url, format_code, config)
+                    add_download_to_queue(url, format_code, download_path, config)
                     print_colored("Added to download queue.", Colors.LIGHT_GREEN)
                 else:
                     print_colored("Downloading Started...", Colors.LIGHT_GREEN)
