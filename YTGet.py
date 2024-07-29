@@ -92,21 +92,23 @@ def add_download_to_queue(url, format_code, config):
 
 # Function to process the download queue
 def process_queue(config):
-    for item in config["queue"]:
+    queue_copy = config["queue"][:]
+    for item in queue_copy:
         url = item["url"]
         format_code = item["format_code"]
         download_path = config["download_path"] or os.getcwd()
         print(f"{Colors.LIGHT_GREEN}Starting download for {url}...{Colors.RESET}")
         if download_video(url, format_code, download_path):
             print(f"{Colors.LIGHT_GREEN}Download completed for {url}.{Colors.RESET}")
+            config["queue"].remove(item)
         else:
             print(f"{Colors.LIGHT_RED}Download failed for {url}. Adding to failed downloads.{Colors.RESET}")
             config["failed_downloads"].append(item)
-        config["queue"].remove(item)
+            config["queue"].remove(item)
         save_config(config)
 
 def main():
-    print(f"{Colors.LIGHT_RED}Welcome to YTGet 1.0.1{Colors.RESET}")
+    print(f"{Colors.LIGHT_RED}Welcome to YTGet 1.0.2{Colors.RESET}")
 
     # Check internet connectivity
     while True:
