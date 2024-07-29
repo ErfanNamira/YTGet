@@ -7,10 +7,12 @@ Welcome to YTGet! This is a simple and efficient script to manage and download Y
 
 ## ✨ Features
 * Automatically download the latest version of yt-dlp.
+* Fetch and download the latest version of YTGet.py from GitHub.
 * Fetch and display available formats for YouTube videos.
 * Add download tasks to a queue.
 * Process and manage the download queue.
 * Save and load configurations for persistent settings.
+* Options to keep the system idle, shut down, or put it to sleep after processing the queue.
 # 💻 Installation
 1. Download the latest release from the releases page.
 2. Extract the files to your desired location.
