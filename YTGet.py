@@ -1,13 +1,12 @@
-# YTGet.py
-__version__ = '1.0.6'
-
 import subprocess
 import os
 import urllib.request
 import json
 import time
-import msvcrt
 import sys
+from urllib.error import HTTPError, URLError
+
+__version__ = '1.1.6'
 
 # ANSI escape codes for colors
 class Colors:
@@ -18,6 +17,7 @@ class Colors:
     LIGHT_BLUE = '\033[94m'
     LIGHT_MAGENTA = '\033[95m'
     RESET = '\033[0m'
+    BOLD = '\033[1m'
 
 # Utility function to print messages with color
 def print_colored(message, color):
@@ -28,7 +28,7 @@ def check_internet_connectivity():
     try:
         response = urllib.request.urlopen('https://www.youtube.com', timeout=5)
         return response.status == 200
-    except Exception as e:
+    except (HTTPError, URLError) as e:
         print_colored(f"Error checking internet connectivity: {e}", Colors.LIGHT_RED)
         return False
 
@@ -121,13 +121,17 @@ def get_available_formats(url):
             line for line in lines 
             if not any(ex_line in line for ex_line in excluded_lines) and not any(exf in line for exf in excluded_formats)
         ]
-        return "\n".join(filtered_lines)
+        return f"{Colors.LIGHT_YELLOW}\n".join(filtered_lines) + Colors.RESET
     except Exception as e:
         print_colored(f"Error fetching available formats: {e}", Colors.LIGHT_RED)
         return ""
 
 # Function to download video with the specified format
 def download_video(url, format_code, download_path, max_retries=10):
+    if not url or not format_code or not download_path:
+        print_colored("URL, format code, or download path cannot be empty.", Colors.LIGHT_RED)
+        return False
+
     os.makedirs(download_path, exist_ok=True)
     retries = 0
     while retries < max_retries:
@@ -154,7 +158,7 @@ def load_config():
 def save_config(config):
     try:
         with open('YTGet_Conf.json', 'w') as config_file:
-            json.dump(config, config_file)
+            json.dump(config, config_file, indent=4)
     except Exception as e:
         print_colored(f"Error saving configuration: {e}", Colors.LIGHT_RED)
 
@@ -165,6 +169,10 @@ def add_download_to_queue(url, format_code, download_path, config):
 
 # Function to process the download queue
 def process_queue(config):
+    if not config["queue"]:
+        print_colored("Queue is empty.", Colors.LIGHT_YELLOW)
+        return
+    
     queue_copy = config["queue"][:]
     for item in queue_copy:
         url = item["url"]
@@ -180,51 +188,39 @@ def process_queue(config):
             config["queue"].remove(item)
         save_config(config)
 
-def shutdown_or_sleep(option):
-    for i in range(60, 0, -1):
-        print(f"{Colors.LIGHT_RED}System will {option} in {i} seconds. Press 'E' to cancel.{Colors.RESET}", end="\r")
-        if cancel_shutdown_or_sleep():
-            print(f"{Colors.LIGHT_GREEN}{option.capitalize()} canceled.{Colors.RESET}")
-            return
-        time.sleep(1)
+# Function to fetch playlist videos
+def fetch_playlist_videos(playlist_url):
+    try:
+        result = subprocess.run(['yt-dlp.exe', '--flat-playlist', '-j', playlist_url], capture_output=True, text=True)
+        video_urls = []
+        for line in result.stdout.splitlines():
+            video_data = json.loads(line)
+            video_urls.append(f"https://www.youtube.com/watch?v={video_data['id']}")
+        return video_urls
+    except Exception as e:
+        print_colored(f"Error fetching playlist videos: {e}", Colors.LIGHT_RED)
+        return []
 
-    if option == "shutdown":
-        os.system("shutdown /s /t 0")
-    elif option == "sleep":
-        os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
+# Function to download the best quality (audio+video) for each video in a playlist
+def download_playlist_best_quality(playlist_url, download_path):
+    video_urls = fetch_playlist_videos(playlist_url)
+    for video_url in video_urls:
+        format_code = 'bestvideo+bestaudio/best'
+        if not download_video(video_url, format_code, download_path):
+            print_colored(f"Failed to download best quality for {video_url}.", Colors.LIGHT_RED)
 
-def cancel_shutdown_or_sleep():
-    if msvcrt.kbhit() and msvcrt.getch().decode('utf-8').lower() == 'e':
-        return True
-    return False
-
-def menu():
-    while True:
-        print_colored("\nOnce the download queue has finished, what would you like to do next?\n1. Keep system idle\n2. Shut down system after 60 seconds\n3. Sleep system after 60 seconds", Colors.LIGHT_BLUE)
-        choice = input("Enter your choice: ")
-
-        if choice == '1':
-            return "idle"
-        elif choice == '2':
-            return "shutdown"
-        elif choice == '3':
-            return "sleep"
-        else:
-            print_colored("Invalid choice. Please try again.", Colors.LIGHT_RED)
-
-def main():
-    print_colored(f"Welcome to YTGet {__version__}", Colors.LIGHT_RED)
-
-    # Check internet connectivity
-    while not check_internet_connectivity():
-        print_colored("No internet connection detected. Please check your connection and press Enter to retry.", Colors.LIGHT_RED)
-        input()
-
-    # Check for updates
-    print_colored("Checking for updates...", Colors.LIGHT_CYAN)
+# Function to download the best audio for each video in a playlist
+def download_playlist_best_audio(playlist_url, download_path):
+    video_urls = fetch_playlist_videos(playlist_url)
+    for video_url in video_urls:
+        format_code = 'bestaudio/best'
+        if not download_video(video_url, format_code, download_path):
+            print_colored(f"Failed to download audio for {video_url}.", Colors.LIGHT_RED)
+# Function to Update yt-dlp & YTGet
+def handle_update_youtube():
     latest_version_youtube = get_latest_version_youtube()
     local_version_youtube = get_local_version_youtube()
-
+    
     if local_version_youtube is None:
         if latest_version_youtube:
             print_colored(f"YTGet.py not found. Downloading the latest version...", Colors.LIGHT_RED)
@@ -234,15 +230,14 @@ def main():
             print_colored("Cannot fetch latest version. Update aborted.", Colors.LIGHT_RED)
     elif latest_version_youtube != local_version_youtube:
         print_colored(f"A new version of YTGet is available: {latest_version_youtube} (current version: {local_version_youtube})", Colors.LIGHT_RED)
-        update = input("Do you want to update YTGet? (y/n): ")
-        if update.lower() == 'y':
+        if input("Do you want to update YTGet? (y/n): ").lower() == 'y':
             update_and_restart_youtube()
         else:
             print_colored("Skipping update.", Colors.LIGHT_RED)
     else:
         print_colored(f"You already have the latest version: {latest_version_youtube}", Colors.LIGHT_GREEN)
 
-    # Update yt-dlp if necessary
+def handle_update_yt_dlp():
     latest_version_yt_dlp = get_latest_version_yt_dlp()
     local_version_yt_dlp = get_local_version_yt_dlp()
 
@@ -255,8 +250,7 @@ def main():
             print_colored("Cannot fetch yt-dlp latest version. Update aborted.", Colors.LIGHT_RED)
     elif latest_version_yt_dlp != local_version_yt_dlp:
         print_colored(f"A new version of yt-dlp is available: {latest_version_yt_dlp} (current version: {local_version_yt_dlp})", Colors.LIGHT_RED)
-        update = input("Do you want to update yt-dlp? (y/n): ")
-        if update.lower() == 'y':
+        if input("Do you want to update yt-dlp? (y/n): ").lower() == 'y':
             download_latest_version_yt_dlp(latest_version_yt_dlp)
             print_colored("yt-dlp has been updated.", Colors.LIGHT_GREEN)
         else:
@@ -264,76 +258,130 @@ def main():
     else:
         print_colored(f"You already have the latest version of yt-dlp: {latest_version_yt_dlp}", Colors.LIGHT_GREEN)
 
+def print_menu():
+    print(f"{Colors.LIGHT_CYAN}========== YTGet Main Menu =========={Colors.RESET}")
+    print(f"{Colors.LIGHT_RED}1.{Colors.RESET} Download A Specific Format")
+    print(f"{Colors.LIGHT_RED}2.{Colors.RESET} Download Best Audio Quality Only")
+    print(f"{Colors.LIGHT_RED}3.{Colors.RESET} Download Best Quality (Audio+Video)")
+    print(f"{Colors.LIGHT_RED}4.{Colors.RESET} Download Playlist Best Audio Quality")
+    print(f"{Colors.LIGHT_RED}5.{Colors.RESET} Download Playlist Best Quality (Audio+Video)")
+    print(f"{Colors.LIGHT_RED}6.{Colors.RESET} Start Download Queue")
+    print(f"{Colors.LIGHT_MAGENTA}7.{Colors.RESET} Check & Update YTGet")
+    print(f"{Colors.LIGHT_MAGENTA}8.{Colors.RESET} Check & Update yt-dlp")
+    print(f"{Colors.LIGHT_MAGENTA}9.{Colors.RESET} Exit")
+
+def main():
+    while not check_internet_connectivity():
+        print_colored("No internet connection detected. Please check your connection and press Enter to retry.", Colors.LIGHT_RED)
+        input()
+
+    print_colored("Checking for updates...", Colors.LIGHT_CYAN)
+    handle_update_youtube()
+    handle_update_yt_dlp()
+
     config = load_config()
 
-    try:
-        while True:
-            print_colored("\nMenu:\n1. Download A Single YouTube Video\n2. Start Download Queue\n3. Exit", Colors.LIGHT_BLUE)
-            choice = input("Enter your choice: ")
+    while True:
+        print_menu()
+        choice = input(f"{Colors.LIGHT_CYAN}Enter your choice: {Colors.RESET}")
 
-            if choice == '1':
-                url = input(f"{Colors.LIGHT_CYAN}Enter YouTube URL: {Colors.RESET}")
-                print_colored("Fetching available formats...", Colors.LIGHT_CYAN)
-                available_formats = get_available_formats(url)
+        if choice == '1':
+            url = input(f"{Colors.LIGHT_CYAN}Enter the video URL: {Colors.RESET}")
+            formats = get_available_formats(url)
+            print(formats)
+            format_code = input(f"{Colors.LIGHT_CYAN}Enter the format code to download: {Colors.RESET}")
+            download_path = input(f"{Colors.LIGHT_CYAN}Enter the download path (leave empty for current directory): {Colors.RESET}")
+            if not download_path:
+                download_path = os.getcwd()
+            action = input(f"{Colors.LIGHT_CYAN}Do you want to add this download to the queue or start immediately? (q/i): {Colors.RESET}")
+            if action == 'i':
+                download_video(url, format_code, download_path)
+            else:
+                add_download_to_queue(url, format_code, download_path, config)
+                print_colored("Added to download queue.", Colors.LIGHT_GREEN)
+        elif choice == '2':
+            url = input(f"{Colors.LIGHT_CYAN}Enter the video URL: {Colors.RESET}")
+            download_path = input(f"{Colors.LIGHT_CYAN}Enter the download path (leave empty for current directory): {Colors.RESET}")
+            if not download_path:
+                download_path = os.getcwd()
+            action = input(f"{Colors.LIGHT_CYAN}Do you want to add this download to the queue or start immediately? (q/i): {Colors.RESET}")
+            if action == 'i':
+                download_video(url, 'bestaudio/best', download_path)
+            else:
+                add_download_to_queue(url, 'bestaudio/best', download_path, config)
+                print_colored("Added to download queue.", Colors.LIGHT_GREEN)
+        elif choice == '3':
+            url = input(f"{Colors.LIGHT_CYAN}Enter the video URL: {Colors.RESET}")
+            download_path = input(f"{Colors.LIGHT_CYAN}Enter the download path (leave empty for current directory): {Colors.RESET}")
+            if not download_path:
+                download_path = os.getcwd()
+            action = input(f"{Colors.LIGHT_CYAN}Do you want to add this download to the queue or start immediately? (q/i): {Colors.RESET}")
+            if action == 'i':
+                download_video(url, 'bestvideo+bestaudio/best', download_path)
+            else:
+                add_download_to_queue(url, 'bestvideo+bestaudio/best', download_path, config)
+                print_colored("Added to download queue.", Colors.LIGHT_GREEN)
+        elif choice == '4':
+            playlist_url = input(f"{Colors.LIGHT_CYAN}Enter the playlist URL: {Colors.RESET}")
+            download_path = input(f"{Colors.LIGHT_CYAN}Enter the download path (leave empty for current directory): {Colors.RESET}")
+            if not download_path:
+                download_path = os.getcwd()
+            action = input(f"{Colors.LIGHT_CYAN}Do you want to add this playlist download to the queue or start immediately? (q/i): {Colors.RESET}")
+            if action == 'i':
+                download_playlist_best_audio(playlist_url, download_path)
+            else:
+                add_download_to_queue(playlist_url, 'bestaudio/best', download_path, config)
+                print_colored("Added playlist download (Best Audio Quality) to the queue.", Colors.LIGHT_GREEN)
+        elif choice == '5':
+            playlist_url = input(f"{Colors.LIGHT_CYAN}Enter the playlist URL: {Colors.RESET}")
+            download_path = input(f"{Colors.LIGHT_CYAN}Enter the download path (leave empty for current directory): {Colors.RESET}")
+            if not download_path:
+                download_path = os.getcwd()
+            action = input(f"{Colors.LIGHT_CYAN}Do you want to add this playlist download to the queue or start immediately? (q/i): {Colors.RESET}")
+            if action == 'i':
+                download_playlist_best_quality(playlist_url, download_path)
+            else:
+                add_download_to_queue(playlist_url, 'bestvideo+bestaudio/best', download_path, config)
+                print_colored("Added playlist download (Best Quality) to the queue.", Colors.LIGHT_GREEN)
+        elif choice == '6':
+            # Prompt user for next action
+            print(f"{Colors.LIGHT_CYAN}Once the download queue has finished, what would you like to do next?{Colors.RESET}")
+            print(f"{Colors.LIGHT_GREEN}1.{Colors.RESET} Keep system idle")
+            print(f"{Colors.LIGHT_GREEN}2.{Colors.RESET} Shut down system after 60 seconds")
+            print(f"{Colors.LIGHT_GREEN}3.{Colors.RESET} Sleep system after 60 seconds")
 
-                if not available_formats:
-                    print_colored("Failed to fetch formats. Please try again later.", Colors.LIGHT_RED)
-                    continue
+            post_queue_choice = input("Enter your choice: ")
 
-                format_lines = available_formats.split('\n')
-                for i, line in enumerate(format_lines):
-                    if line.startswith("[info] Available formats for"):
-                        format_lines[i] = f"{Colors.LIGHT_YELLOW}{line}"
+            # Process the download queue
+            process_queue(config)
 
-                print("\n".join(format_lines))
-                format_code = input(f"{Colors.LIGHT_BLUE}Enter format code to download (e.g., 251 or 251+271): {Colors.RESET}")
+            if post_queue_choice == '2':
+                print_colored("System will shut down in 60 seconds.", Colors.LIGHT_CYAN)
+                time.sleep(60)
+                os.system("shutdown /s /t 0")
+            elif post_queue_choice == '3':
+                print_colored("System will sleep in 60 seconds.", Colors.LIGHT_CYAN)
+                time.sleep(60)
+                os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
+            else:
+                print_colored("System will remain idle.", Colors.LIGHT_GREEN)
+        elif choice == '7':
+            update_and_restart_youtube()
+        elif choice == '8':
+            latest_version = get_latest_version_yt_dlp()
+            local_version = get_local_version_yt_dlp()
+            if latest_version and local_version != latest_version:
+                print_colored(f"Downloading the latest version of yt-dlp (v{latest_version})...", Colors.LIGHT_CYAN)
+                download_latest_version_yt_dlp(latest_version)
+                print_colored("yt-dlp has been updated.", Colors.LIGHT_GREEN)
+            else:
+                print_colored("yt-dlp is already up-to-date.", Colors.LIGHT_GREEN)
 
-                download_path = config["download_path"]
-                if download_path:
-                    change_path = input(f"{Colors.LIGHT_CYAN}Current download path is '{download_path}'. Do you want to change it? (y/n): {Colors.RESET}")
-                    if change_path.lower() == 'y':
-                        download_path = input(f"{Colors.LIGHT_YELLOW}Enter new download path: {Colors.RESET}")
-                        config["download_path"] = download_path
-                        save_config(config)
-                else:
-                    use_default_path = input(f"{Colors.LIGHT_CYAN}No download path set. Do you want to enter a download path? (y/n): {Colors.RESET}")
-                    if use_default_path.lower() == 'y':
-                        download_path = input(f"{Colors.LIGHT_YELLOW}Enter download path: {Colors.RESET}")
-                        config["download_path"] = download_path
-                        save_config(config)
-                    else:
-                        download_path = os.getcwd()
-
-                queue_or_immediate = input(f"{Colors.LIGHT_CYAN}Do you want to add this download to the queue or start immediately? (q/i): {Colors.RESET}")
-                if queue_or_immediate.lower() == 'q':
-                    add_download_to_queue(url, format_code, download_path, config)
-                    print_colored("Added to download queue.", Colors.LIGHT_GREEN)
-                else:
-                    print_colored("Downloading Started...", Colors.LIGHT_GREEN)
-                    if download_video(url, format_code, download_path):
-                        print_colored("Download finished.", Colors.LIGHT_GREEN)
-                    else:
-                        print_colored("Download failed. Adding to failed downloads.", Colors.LIGHT_RED)
-                        config["failed_downloads"].append({"url": url, "format_code": format_code})
-                    save_config(config)
-
-            elif choice == '2':
-                post_queue_action = menu()
-                print_colored("Starting download queue...", Colors.LIGHT_CYAN)
-                process_queue(config)
-                print_colored("Download queue processing completed.", Colors.LIGHT_GREEN)
-                if post_queue_action == "idle":
-                    print_colored("System will remain idle.", Colors.LIGHT_GREEN)
-                elif post_queue_action == "shutdown":
-                    shutdown_or_sleep("shutdown")
-                elif post_queue_action == "sleep":
-                    shutdown_or_sleep("sleep")
-
-            elif choice == '3':
-                print_colored("Exiting program. Goodbye!", Colors.LIGHT_RED)
-                break
-    except KeyboardInterrupt:
-        print_colored("Program interrupted. Exiting...", Colors.LIGHT_RED)
+        elif choice == '9':
+            print_colored("Exiting the program. Goodbye!", Colors.LIGHT_CYAN)
+            break
+        else:
+            print_colored("Invalid choice. Please try again.", Colors.LIGHT_RED)
 
 if __name__ == "__main__":
     main()
