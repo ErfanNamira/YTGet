@@ -1,5 +1,5 @@
 # YTGet.py
-__version__ = '1.0.5'
+__version__ = '1.0.6'
 
 import subprocess
 import os
@@ -109,7 +109,7 @@ def get_available_formats(url):
     try:
         result = subprocess.run(['yt-dlp.exe', '-F', url], capture_output=True, text=True)
         formats = result.stdout
-        excluded_formats = ["sb2", "sb3", "sb1", "sb0", "drc", "18", "sb3 mhtml", "sb2 mhtml", "sb1 mhtml", "sb0 mhtml", "233 mp4", "234 mp4", "18  mp4"]
+        excluded_formats = ["sb2", "sb3", "sb1", "sb0", "drc", "18", "sb3 mhtml", "sb2 mhtml", "sb1 mhtml", "sb0 mhtml", "233 mp4", "234 mp4", "18  mp4", "233", "234"]
         excluded_lines = [
             "Extracting URL",
             "Downloading webpage",
