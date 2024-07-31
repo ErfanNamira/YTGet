@@ -2,7 +2,7 @@
 Welcome to YTGet! This is a simple and efficient script to manage and download YouTube videos using the yt-dlp executable. This tool offers features like automatic updates for yt-dlp, downloading videos in specified formats, and managing a download queue.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/ErfanNamira/YTGet/main/Imagez/YTGet.jpg" alt="YTGet">
+  <img src="https://raw.githubusercontent.com/ErfanNamira/YTGet/main/Imagez/YTGet1.1.6.jpg" alt="YTGet">
 </p>
 
 ## ✨ Features
@@ -10,6 +10,9 @@ Welcome to YTGet! This is a simple and efficient script to manage and download Y
 * Fetch and download the latest version of YTGet.py from GitHub.
 * Fetch and display available formats for YouTube videos.
 * Add download tasks to a queue.
+* Best Quality Download: Download the best quality available for YouTube videos, including both audio and video components.
+* Best Audio Quality Download: Download the best available audio quality for YouTube videos.
+* Playlist Downloads: Download videos from playlists in either the best audio quality or best overall quality (audio + video).
 * Process and manage the download queue.
 * Save and load configurations for persistent settings.
 * Options to keep the system idle, shut down, or put it to sleep after processing the queue.
