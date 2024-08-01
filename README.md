@@ -6,7 +6,6 @@ YTGet can download videos from more than 1800 sites thanks to the extensive supp
 <p align="center">
   <img src="https://raw.githubusercontent.com/ErfanNamira/YTGet/main/Imagez/YTGet1.1.7.jpg" alt="YTGet">
 </p>
-
 ## ✨ Features
 * Automatically download the latest version of yt-dlp.
 * Fetch and download the latest version of YTGet.py from GitHub.
