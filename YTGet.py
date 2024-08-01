@@ -6,7 +6,7 @@ import time
 import sys
 from urllib.error import HTTPError, URLError
 
-__version__ = '1.1.6'
+__version__ = '1.1.7'
 
 # ANSI escape codes for colors
 class Colors:
@@ -16,6 +16,13 @@ class Colors:
     LIGHT_YELLOW = '\033[93m'
     LIGHT_BLUE = '\033[94m'
     LIGHT_MAGENTA = '\033[95m'
+    LIGHT_PINK = '\033[38;5;217m'
+    PASTEL_BLUE = '\033[38;5;159m'
+    PASTEL_PURPLE = '\033[38;5;183m'
+    PASTEL_YELLOW = '\033[38;5;229m'
+    PASTEL_ORANGE = '\033[38;5;215m'
+    GRAY = '\033[90m'        
+    WHITE = '\033[97m'
     RESET = '\033[0m'
     BOLD = '\033[1m'
 
@@ -259,16 +266,20 @@ def handle_update_yt_dlp():
         print_colored(f"You already have the latest version of yt-dlp: {latest_version_yt_dlp}", Colors.LIGHT_GREEN)
 
 def print_menu():
-    print(f"{Colors.LIGHT_CYAN}========== YTGet Main Menu =========={Colors.RESET}")
-    print(f"{Colors.LIGHT_RED}1.{Colors.RESET} Download A Specific Format")
-    print(f"{Colors.LIGHT_RED}2.{Colors.RESET} Download Best Audio Quality Only")
-    print(f"{Colors.LIGHT_RED}3.{Colors.RESET} Download Best Quality (Audio+Video)")
-    print(f"{Colors.LIGHT_RED}4.{Colors.RESET} Download Playlist Best Audio Quality")
-    print(f"{Colors.LIGHT_RED}5.{Colors.RESET} Download Playlist Best Quality (Audio+Video)")
-    print(f"{Colors.LIGHT_RED}6.{Colors.RESET} Start Download Queue")
-    print(f"{Colors.LIGHT_MAGENTA}7.{Colors.RESET} Check & Update YTGet")
-    print(f"{Colors.LIGHT_MAGENTA}8.{Colors.RESET} Check & Update yt-dlp")
-    print(f"{Colors.LIGHT_MAGENTA}9.{Colors.RESET} Exit")
+    print(f"{Colors.LIGHT_PINK}========== YTGet Main Menu =========={Colors.RESET}")
+    print(f"{Colors.LIGHT_RED}1. Download A Specific Format{Colors.RESET}")
+    print(f"{Colors.LIGHT_PINK}============ Best Format ============{Colors.RESET}")
+    print(f"{Colors.PASTEL_BLUE}2. Download Best Audio Only{Colors.RESET}")
+    print(f"{Colors.PASTEL_BLUE}3. Download Best Quality (Audio+Video){Colors.RESET}")
+    print(f"{Colors.LIGHT_PINK}======== Download Playlists ========={Colors.RESET}")
+    print(f"{Colors.PASTEL_PURPLE}4. Download Playlist Best Audio{Colors.RESET}")
+    print(f"{Colors.PASTEL_PURPLE}5. Download Playlist Best Quality (Audio+Video){Colors.RESET}")
+    print(f"{Colors.LIGHT_PINK}=============== Queue ==============={Colors.RESET}")
+    print(f"{Colors.PASTEL_ORANGE}6. Start Download Queue{Colors.RESET}")
+    print(f"{Colors.LIGHT_PINK}=============== Update =============={Colors.RESET}")
+    print(f"{Colors.PASTEL_YELLOW}7. Check & Update YTGet{Colors.RESET}")
+    print(f"{Colors.PASTEL_YELLOW}8. Check & Update yt-dlp{Colors.RESET}")
+    print(f"{Colors.WHITE}9. Exit{Colors.RESET}")
 
 def main():
     while not check_internet_connectivity():
