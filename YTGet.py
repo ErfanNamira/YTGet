@@ -6,7 +6,7 @@ import time
 import sys
 from urllib.error import HTTPError, URLError
 
-__version__ = '1.1.7'
+__version__ = '1.1.8'
 
 # ANSI escape codes for colors
 class Colors:
@@ -141,9 +141,18 @@ def download_video(url, format_code, download_path, max_retries=10):
 
     os.makedirs(download_path, exist_ok=True)
     retries = 0
+
+    # Check if cookies.txt exists and set the command accordingly
+    cookie_file = 'cookies.txt'
+    if os.path.exists(cookie_file):
+        cookie_option = ['--cookies', cookie_file]
+    else:
+        cookie_option = []
+
     while retries < max_retries:
         try:
-            result = subprocess.run(['yt-dlp.exe', '-f', format_code, url, '-o', os.path.join(download_path, '%(title)s.%(ext)s')])
+            # Include the cookies option in the yt-dlp command
+            result = subprocess.run(['yt-dlp.exe', '-f', format_code, url, '-o', os.path.join(download_path, '%(title)s.%(ext)s')] + cookie_option)
             if result.returncode == 0:
                 return True
         except Exception as e:
@@ -227,7 +236,12 @@ def download_playlist_best_audio(playlist_url, download_path):
 def handle_update_youtube():
     latest_version_youtube = get_latest_version_youtube()
     local_version_youtube = get_local_version_youtube()
-    
+
+    # Skip update if rate limit exceeded
+    if latest_version_youtube is None and "403" in str(latest_version_youtube):
+        print_colored("Rate limit exceeded. Skipping YTGet update check.", Colors.LIGHT_RED)
+        return  # Skip the rest of the update logic
+
     if local_version_youtube is None:
         if latest_version_youtube:
             print_colored(f"YTGet.py not found. Downloading the latest version...", Colors.LIGHT_RED)
@@ -237,16 +251,18 @@ def handle_update_youtube():
             print_colored("Cannot fetch latest version. Update aborted.", Colors.LIGHT_RED)
     elif latest_version_youtube != local_version_youtube:
         print_colored(f"A new version of YTGet is available: {latest_version_youtube} (current version: {local_version_youtube})", Colors.LIGHT_RED)
-        if input("Do you want to update YTGet? (y/n): ").lower() == 'y':
-            update_and_restart_youtube()
-        else:
-            print_colored("Skipping update.", Colors.LIGHT_RED)
+        print_colored("Skipping update due to rate limit.", Colors.LIGHT_RED)
     else:
         print_colored(f"You already have the latest version: {latest_version_youtube}", Colors.LIGHT_GREEN)
 
 def handle_update_yt_dlp():
     latest_version_yt_dlp = get_latest_version_yt_dlp()
     local_version_yt_dlp = get_local_version_yt_dlp()
+
+    # Skip update if rate limit exceeded
+    if latest_version_yt_dlp is None and "403" in str(latest_version_yt_dlp):
+        print_colored("Rate limit exceeded. Skipping yt-dlp update check.", Colors.LIGHT_RED)
+        return  # Skip the rest of the update logic
 
     if local_version_yt_dlp is None:
         if latest_version_yt_dlp:
@@ -257,11 +273,7 @@ def handle_update_yt_dlp():
             print_colored("Cannot fetch yt-dlp latest version. Update aborted.", Colors.LIGHT_RED)
     elif latest_version_yt_dlp != local_version_yt_dlp:
         print_colored(f"A new version of yt-dlp is available: {latest_version_yt_dlp} (current version: {local_version_yt_dlp})", Colors.LIGHT_RED)
-        if input("Do you want to update yt-dlp? (y/n): ").lower() == 'y':
-            download_latest_version_yt_dlp(latest_version_yt_dlp)
-            print_colored("yt-dlp has been updated.", Colors.LIGHT_GREEN)
-        else:
-            print_colored("Skipping update.", Colors.LIGHT_RED)
+        print_colored("Skipping update due to rate limit.", Colors.LIGHT_RED)
     else:
         print_colored(f"You already have the latest version of yt-dlp: {latest_version_yt_dlp}", Colors.LIGHT_GREEN)
 
