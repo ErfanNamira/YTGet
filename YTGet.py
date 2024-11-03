@@ -6,7 +6,7 @@ import time
 import sys
 from urllib.error import HTTPError, URLError
 
-__version__ = '1.1.8'
+__version__ = '1.1.9'
 
 # ANSI escape codes for colors
 class Colors:
@@ -165,10 +165,13 @@ def load_config():
     if os.path.exists('YTGet_Conf.json'):
         try:
             with open('YTGet_Conf.json', 'r') as config_file:
-                return json.load(config_file)
+                config = json.load(config_file)
+            # Ensure a default timestamp exists if missing
+            config.setdefault("last_update_check", 0)
+            return config
         except Exception as e:
             print_colored(f"Error loading configuration: {e}", Colors.LIGHT_RED)
-    return {"download_path": None, "queue": [], "failed_downloads": []}
+    return {"download_path": None, "queue": [], "failed_downloads": [], "last_update_check": 0}
 
 # Function to save configuration to a file
 def save_config(config):
@@ -298,11 +301,19 @@ def main():
         print_colored("No internet connection detected. Please check your connection and press Enter to retry.", Colors.LIGHT_RED)
         input()
 
-    print_colored("Checking for updates...", Colors.LIGHT_CYAN)
-    handle_update_youtube()
-    handle_update_yt_dlp()
-
     config = load_config()
+
+    # Skip update check if the last check was within 24 hours (86400 seconds)
+    current_time = time.time()
+    if current_time - config.get("last_update_check", 0) >= 86400:
+        print_colored("Checking for updates...", Colors.LIGHT_CYAN)
+        handle_update_youtube()
+        handle_update_yt_dlp()
+        # Update the last check timestamp
+        config["last_update_check"] = current_time
+        save_config(config)
+    else:
+        print_colored("Update check skipped: last check performed within the past 24 hours.", Colors.LIGHT_CYAN)
 
     while True:
         print_menu()
